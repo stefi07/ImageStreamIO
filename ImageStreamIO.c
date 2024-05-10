@@ -2291,3 +2291,45 @@ long ImageStreamIO_UpdateIm( IMAGE *image )
 {
     return ImageStreamIO_UpdateIm_atime(image, NULL);
 }
+
+
+/**
+ * ## Purpose
+ *
+ * "Almost" thread-safely acquire image->md->write
+ * This is totally not thread safe, but reduces the error band
+ * to probably just a few 10s of nanoseconds.
+ * This matters in case the stream is e.g. the output of a CPU MVM and the SHM
+ * is held in write state for a decent amount of time, in which case non-blocking
+ * (instantaneous) readers may sample the SHM while write=1.
+ *
+ *
+ * Wait for image->write to be set to 0 before performing a read / write
+ * (will not be safe as soon as 2 processes are waiting at the same time)
+ * (image->write needs to be replaced by a proper lock for that)
+ *
+ * Write callers should always call this function instead of the legacy
+ * image->md->write = 1
+ *
+ * Read callers should call this function to ensure a possible long read has completed.
+ *
+ * ## Arguments
+ *
+ * @param[in]
+ * image	IMAGE*
+ * 			pointer to shmim
+ *
+ * @param[in]
+ * int      acquire
+ *          perform write = 1 upon exit
+ **/
+long ImageStreamIO_BusywaitForNoWrite(IMAGE *image, int acquire)
+{
+    while(image->md->write)
+    {
+    }
+    if(acquire)
+    {
+        image->md->write = 1;
+    }
+}
