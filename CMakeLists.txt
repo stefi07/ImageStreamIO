@@ -81,6 +81,8 @@ install(EXPORT ${LIBNAME}Targets
     DESTINATION lib/cmake
 )
 
+install(TARGETS ${LIBNAME} EXPORT milkTargets)
+
 include(CMakePackageConfigHelpers)
 
 write_basic_package_version_file(
